@@ -1,5 +1,5 @@
 ### EX8 Web Scraping On E-commerce platform using BeautifulSoup
-### DATE: 
+### DATE: 28.08.2026
 ### AIM: To perform Web Scraping on Amazon using (beautifulsoup) Python.
 ### Description: 
 <div align = "justify">
@@ -32,43 +32,96 @@ import re
 import matplotlib.pyplot as plt
 
 def convert_price_to_float(price):
-    # Remove currency symbols and commas, and then convert to float
-    price = re.sub(r'[^\d.]', '', price)  # Remove non-digit characters except '.'
+    price = re.sub(r'[^\d.]', '', price)
     return float(price) if price else 0.0
 
-def get_amazon_products(search_query):
-    base_url = 'https://www.amazon.in'
-    headers = {
-        'User-Agent': 'Your User Agent'  # Add your User Agent here
-    }
+def get_products(search_query):
+    base_url = 'https://books.toscrape.com/'
+    response = requests.get(base_url)
 
-    search_query = search_query.replace(' ', '+')
-    url = f'{base_url}/s?k={search_query}'
-
-    response = requests.get(url, headers=headers)
-    products_data = []  # List to store product information
+    products_data = []
 
     if response.status_code == 200:
-        /* TYPE YOUR CODE HERE
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-    return sorted(products_data, key=lambda x: convert_price_to_float(x['Price']))
+        products = soup.find_all('article', class_='product_pod')
 
-search_query = input('Enter product to search on Amazon: ')
-products = get_amazon_products(search_query)
+        for product in products:
+            name_tag = product.find('h3').find('a')
+            price_tag = product.find('p', class_='price_color')
+            rating_tag = product.find('p', class_='star-rating')
 
-# Displaying product data using a bar chart
-if products:  # Check if products list is not empty
-    product_names = [product['Product'][:30] if len(product['Product']) > 30 else product['Product'] for product in products]
-    product_prices = [convert_price_to_float(product['Price']) for product in products]
+            product_name = name_tag.get('title')
+            price = price_tag.get_text(strip=True)
+
+            if rating_tag:
+                rating = rating_tag.get('class')[1]
+            else:
+                rating = 'Unknown'
+
+            if search_query.lower() in product_name.lower():
+                products_data.append({
+                    'Product': product_name,
+                    'Price': price,
+                    'Rating': rating
+                })
+
+    return sorted(
+        products_data,
+        key=lambda x: convert_price_to_float(x['Price'])
+    )
+
+
+search_query = input('Enter product to search: ')
+
+products = get_products(search_query)
+
+if products:
+
+    print('\nProducts found:\n')
+
+    for product in products:
+        print('Product:', product['Product'])
+        print('Price:', product['Price'])
+        print('Rating:', product['Rating'])
+        print('-' * 60)
+
+    product_names = [
+        product['Product'][:30]
+        if len(product['Product']) > 30
+        else product['Product']
+        for product in products
+    ]
+
+    product_prices = [
+        convert_price_to_float(product['Price'])
+        for product in products
+    ]
 
     plt.figure(figsize=(10, 6))
-    plt.barh(range(len(product_prices)), product_prices, color='skyblue')
+
+    plt.barh(
+        range(len(product_prices)),
+        product_prices,
+        color='skyblue'
+    )
+
     plt.xlabel('Price')
     plt.ylabel('Product')
-    plt.title(f'Products and their Prices on Amazon for {search_query.capitalize()} (Ascending Order)')
-    plt.yticks(range(len(product_prices)), product_names)  # Setting y-axis labels as shortened product names
+
+    plt.title(
+        f'Products and their Prices for '
+        f'{search_query.capitalize()} (Ascending Order)'
+    )
+
+    plt.yticks(
+        range(len(product_prices)),
+        product_names
+    )
+
     plt.tight_layout()
     plt.show()
+
 else:
     print('No products found.')
 
@@ -76,4 +129,9 @@ else:
 
 ### Output:
 
+<img width="672" height="206" alt="image" src="https://github.com/user-attachments/assets/ab76ada5-2437-4bc5-9622-942385944587" />
+
+
 ### Result:
+Therefore, Web Scraping on Amazon using (beautifulsoup) Python is implemented successfully.
+
